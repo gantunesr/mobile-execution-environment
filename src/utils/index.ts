@@ -16,6 +16,10 @@ const initEventStream = (jobId: string): any => {
     targetOrigin: '*',
     targetWindow: window,
   });
+
+  stream.on('data', (data: any) => {
+    console.log(`In ${jobId} we're getting DATA: ${data}`);
+  })
   return { stream, window };
 }
 
