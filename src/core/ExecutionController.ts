@@ -22,30 +22,32 @@ class ExecutionController {
     this.counter = 0;
   }
 
-  _createWindow = (jobId: string): WindowWorker => {
-    // return new Promise((resolve, reject) => {
+  _createWindow = (jobId: string): Promise<WindowWorker> => {
+    return new Promise((resolve, reject) => {
       const iframe = document.createElement('iframe');
       iframe.setAttribute('id', jobId);
+  
+      iframe.setAttribute('src', 'https://www.google.com');
       document.body.appendChild(iframe);
 
-    //   // MDN article for `load` event: https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event
-    //   iframe.addEventListener('load', () => {
-    //     if (iframe.contentWindow) {
-    //       resolve(iframe.contentWindow);
-    //     } else {
-    //       // We don't know of a case when this would happen, but better to fail
-    //       // fast if it does.
-    //       reject(
-    //         new Error(
-    //           `iframe.contentWindow not present on load for job "${jobId}".`,
-    //         ),
-    //       );
-    //     }
-    //   });
+      // MDN article for `load` event: https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event
+      iframe.addEventListener('load', () => {
+        if (iframe.contentWindow) {
+          resolve(iframe.contentWindow);
+        } else {
+          // We don't know of a case when this would happen, but better to fail
+          // fast if it does.
+          reject(
+            new Error(
+              `iframe.contentWindow not present on load for job "${jobId}".`,
+            ),
+          );
+        }
+      });
 
       iframe.setAttribute('sandbox', 'allow-scripts');
-      return iframe.contentWindow;
-    // })
+      // return iframe.contentWindow;
+    })
   }
 
   // PUBLIC METHODS
