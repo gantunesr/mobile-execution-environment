@@ -1,17 +1,77 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import './App.css';
-import { ProxyMessageStream } from './core';
+import { ProxyMessageStream, ExecutionController } from './core';
 import { initEventStream } from './utils';
-import { useJobsState } from './hooks';
+
+const usePrevious = (value, initialValue) => {
+  const ref = useRef(initialValue);
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+};
+
+const useEffectDebugger = (effectHook, dependencies, dependencyNames = []) => {
+  const previousDeps = usePrevious(dependencies, []);
+
+  const changedDeps = dependencies.reduce((accum, dependency, index) => {
+    if (dependency !== previousDeps[index]) {
+      const keyName = dependencyNames[index] || index;
+      return {
+        ...accum,
+        [keyName]: {
+          before: previousDeps[index],
+          after: dependency
+        }
+      };
+    }
+
+    return accum;
+  }, {});
+
+  if (Object.keys(changedDeps).length) {
+    console.log('[use-effect-debugger] ', changedDeps);
+  }
+
+  useEffect(effectHook, dependencies);
+};
 
 function App() {
 
+  const [jobs, setJobs] = useState([]);
   const [counter, setCounter] = useState(0);
   const [proxyService, setProxyService] = useState();
-  const [jobs, findJob, addJob, removeJob, removeAllJobs] = useJobsState();
+
+  console.log('In every render', jobs, counter);
+
+  const sendDataToRN = useCallback(() => {
+    console.log('LOG: sendDataToRN executed');
+    proxyService && proxyService.write('hello');
+  }, [proxyService]);
+
+  const createWindow = useCallback(() => {
+    console.log('LOG: createWindow executed');
+
+    // This should be removed later
+    // The Id should be provided by the SnapController
+    const jobId = `jobId-${counter.toString()}`;
+  
+    console.log('hello');
+    const { stream, window } = initEventStream(jobId);
+
+    console.log(jobs, { id: jobId, window, stream })
+    const newJobsState = [
+      ...jobs,
+      { id: jobId, window, stream },
+    ];
+    console.log(newJobsState);
+    setJobs(newJobsState);
+    setCounter(counter+1);
+  }, [jobs, counter])
 
   useEffect(() => {
+    console.log('LOG: Check renderings A');
     const proxy = new ProxyMessageStream({
       name: 'webview',
       target: 'rnside',
@@ -22,52 +82,58 @@ function App() {
 
   }, []);
 
-  // useEffect(() => {
-  //   if (!proxyService) {
-  //     return;
-  //   }
-  
-  //   // Subscribe to events originated on the RN App
-  //   proxyService.on('data', (data) => {
-  //     console.log('LOG: Proxy receiving data - ', data);
-  //     const { snapId, method, args } = JSON.parse(data);
-  //     const job = findJob(snapId);
-  //     if (job === undefined) {
-  //       return;
-  //     }
-  //     console.log('DATA', { snapId, method, args, job });  
-  //   });
-  // // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [proxyService]);
+  useEffect(() => {
+    if (!proxyService) {
+      return;
+    }
 
-  const createWindow = () => {
-    console.log('LOG: createWindow executed');
+    const startSnap = async () => {
+      await executionController.initJob('mock-id');
+    }
 
-    // This should be removed later
-    // The Id should be passed from the SnapController
-    const jobId = `jobId-${counter.toString()}`;
-    const { stream, window } = initEventStream(jobId);
-    addJob({ id: jobId, window, stream })
-    setCounter(counter+1);
-  }
+    // Subscribe to events originated on the RN App
+    console.log('LOG: Subscribe to events originated on the RN App');
 
-  // const sendDataToIframeStream = () => {
-  //   const job = findJob('jobId-2');
-  // }
+    const executionController = new ExecutionController();
 
-  // const sendDataToJob = (jobId) => {
-  //   const job = findJob('jobId-0');
-  //   console.log(job.stream);
-  // }
+    proxyService.on('data', (data) => {
+      console.log('LOG: Proxy receiving data - ', data);
+      const { snapId, method, args } = JSON.parse(data);
 
-  const sendDataToRN = () => {
-    console.log('LOG: sendDataToRN executed');
-    proxyService && proxyService.write('hello');
-  }
+      switch (method) {
+        case 'start-snap':
+          console.log('start-snap');
+          startSnap();
+          return;
+
+        case 'hello':
+          // sendDataToRN();
+          return;
+
+        case 'stream-to-iframe':
+          // console.log({ jobs });
+          // const job = jobs.find((job) => job.id === snapId);
+          // if (job === undefined) {
+          //   console.log(`Job | Snap with ID ${snapId} not found`);
+          //   return;
+          // }
+          // console.log('DATA', { snapId, method, args, job }); 
+          return;
+
+        default:
+          console.log('Default case');
+      }
+
+    });
+  }, [proxyService]);
+
+  useEffect(() => {
+    console.log('In useEffect', { counter, jobs });
+  }, [jobs, counter]);
 
   return (
     <div className="App">
-      <button onClick={createWindow}>
+      {/* <button onClick={createWindow}>
         Add new iframe
       </button>
 
@@ -75,9 +141,9 @@ function App() {
         Send data to RN App
       </button>
 
-      <button onClick={() => console.log('Send date to iframe')}>
+      <button onClick={() => console.log('Send data to iframe')}>
         Send data iframe
-      </button>
+      </button> */}
     </div>
   );
 }
