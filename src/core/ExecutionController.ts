@@ -1,15 +1,11 @@
 import { WindowPostMessageStream } from '@metamask/post-message-stream';
 
-// interface IExecutionControllerArgs {
-//   jobId: string;
-// }
-
-type WindowWorker = Window | null;
+type WindowWorker = Window | undefined;
 
 interface IJob {
-  jobId: string;
+  id: string;
   window: WindowWorker;
-//   stream: WindowPostMessageStream;
+  stream: WindowPostMessageStream;
 }
 
 class ExecutionController {
@@ -27,7 +23,7 @@ class ExecutionController {
       const iframe = document.createElement('iframe');
       iframe.setAttribute('id', jobId);
   
-      iframe.setAttribute('src', 'https://www.google.com');
+      iframe.setAttribute('src', 'http://localhost:3001/');
       document.body.appendChild(iframe);
 
       // MDN article for `load` event: https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event
@@ -50,15 +46,31 @@ class ExecutionController {
     })
   }
 
+  _initJobStream = async (jobId: string): Promise<IJob> => {
+    const window = await this._createWindow(jobId);
+    const stream = new WindowPostMessageStream({
+      name: 'parent',
+      target: 'child',
+      targetWindow: window,
+      targetOrigin: '*',
+    });
+
+    stream.on('data', () => console.log(`hello from iframe ${jobId}`))
+
+    return { id: jobId, window, stream };
+  }
+
   // PUBLIC METHODS
 
   initJob = async (jobId: string) => {
     console.log('LOG: ExecutionController::initJob - Start new job creation');
     const mockId = `${jobId}-${this.counter}`;
-    const window = await this._createWindow(mockId);
-    this.updateJobsState({ jobId: mockId, window });
+    const job = await this._initJobStream(mockId);
+    this.updateJobsState(job);
     this.counter = this.counter + 1;
   };
+
+  findJob = (jobId: string) => this.jobs.find((job: IJob) => job.id === jobId);
 
   updateJobsState = (newJob: IJob) => {
     console.log('updateJobsState', this.jobs, newJob);

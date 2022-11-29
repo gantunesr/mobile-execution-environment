@@ -64,7 +64,6 @@ class ProxyMessageStream extends BasePostMessageStream {
   }
 
   _postMessage(data: unknown): void {
-    console.log('LOG: _postMessage executed')
     this._targetWindow.postMessage(
       JSON.stringify({
         target: this._target,
