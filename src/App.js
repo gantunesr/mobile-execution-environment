@@ -49,10 +49,9 @@ function App() {
 
     proxyService.on('data', async (data) => {
       console.log('LOG: Proxy receiving data - ', data);
-      const {method, args } = data.data;
+      const { data : { data: { method, args } }, jobId } = data;
 
-      const snapId = 'asd';
-      console.log(snapId, method, args)
+      console.log(jobId, method, args)
 
       switch (method) {
         case 'terminate':
@@ -62,9 +61,9 @@ function App() {
 
         case 'ping':
           console.log(executionController.jobs);
-          await startSnap(snapId);
-          const job = executionController.findJob(snapId);
-          job.stream.write(data);
+          await startSnap(jobId);
+          const job = executionController.findJob(jobId);
+          job.stream.write(data.data);
           // sendDataToRN();
           return;
     
@@ -75,11 +74,11 @@ function App() {
 
         case 'start-snap':
           console.log('start-snap');
-          startSnap(snapId);
+          startSnap(jobId);
           return;
 
         case 'stream-to-iframe':
-          console.log({ snapId, method, args })
+          console.log({ jobId, method, args })
           // console.log({ jobs });
           
           console.log('job->', job, job.stream.write, proxyService);
@@ -92,8 +91,8 @@ function App() {
           return;
 
         default:
-          const jobq = executionController.findJob(snapId);
-          jobq.stream.write(data);
+          const jobq = executionController.findJob(jobId);
+          jobq.stream.write(data.data);
           console.log('Default case');
       }
 
