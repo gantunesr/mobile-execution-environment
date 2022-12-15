@@ -12,7 +12,7 @@ type State = Job[] | [];
 export const useJobsState = () => {
   const [jobs, setJobs] = useState<State>([]);
 
-  const findJob = useCallback(
+  const getJob = useCallback(
     (jobId: string): Job | undefined  => jobs.find((job) => job.id === jobId), [jobs]
   );    
 
@@ -36,7 +36,7 @@ export const useJobsState = () => {
 
   return [
     jobs,
-    findJob,
+    getJob,
     addJob,
     removeJob,
     removeAllJobs,
