@@ -1,6 +1,12 @@
 import { WindowPostMessageStream } from '@metamask/post-message-stream';
 
+import { IFRAME_URL } from '../constants';
+
 type WindowWorker = Window | undefined;
+
+interface ExecutionControllerArgs {
+  proxyService: any;
+}
 
 interface IJob {
   id: string;
@@ -13,7 +19,7 @@ class ExecutionController {
   public jobs: IJob[] | [];
   private proxyService: any;
 
-  constructor({ proxyService }) {
+  constructor({ proxyService }: ExecutionControllerArgs) {
     this.jobs = [];
     this.proxyService = proxyService;
   }
@@ -23,7 +29,7 @@ class ExecutionController {
       const iframe = document.createElement('iframe');
       iframe.setAttribute('id', jobId);
   
-      iframe.setAttribute('src', 'https://metamask.github.io/iframe-execution-environment/0.10.0');
+      iframe.setAttribute('src', IFRAME_URL);
       document.body.appendChild(iframe);
 
       // MDN article for `load` event: https://developer.mozilla.org/en-US/docs/Web/API/Window/load_event
@@ -57,7 +63,7 @@ class ExecutionController {
     console.log({ stream });
 
     stream.on('data', (data: any) => {
-      console.log('proxyService iframe message', !!this.proxyService, data);
+      console.log('[ExecutionController LOG] ProxyService sending message to iframe', data);
       this.proxyService.write({ data, jobId });
     })
 
@@ -67,25 +73,22 @@ class ExecutionController {
   // PUBLIC METHODS
 
   initJob = async (jobId: string) => {
-    console.log('LOG: ExecutionController::initJob - Start new job creation');
-    const mockId = `${jobId}`;
-    const job = await this._initJobStream(mockId);
+    console.log('[ExecutionController LOG] initJob: Start new job');
+    const job = await this._initJobStream(jobId);
     this.updateJobsState(job);
   };
 
-  findJob = (jobId: string) => {
+  getJob = (jobId: string) => {
     const job = this.jobs.find((job: IJob) => job.id === jobId)
-    console.log('findJob', { jobId, job });
+    console.log('[ExecutionController LOG] getJob:', { jobId, job });
     return job;
   };
 
-  updateJobsState = (newJob: IJob) => {
-    console.log('updateJobsState', this.jobs, newJob);
+  updateJobsState = (newJob: IJob) => {    
     const newJobsState = [...this.jobs, newJob];
     this.jobs = newJobsState;
-    console.log(this.jobs);
+    console.log('[ExecutionController LOG] updateJobsState:', this.jobs, newJob);
   }
-
 };
 
 export { ExecutionController };
