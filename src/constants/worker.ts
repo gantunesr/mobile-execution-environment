@@ -1,1 +1,1 @@
-export const IFRAME_URL = 'https://metamask.github.io/iframe-execution-environment/0.11.0';
+export const IFRAME_URL = 'https://metamask.github.io/iframe-execution-environment/0.10.0';
