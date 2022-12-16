@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react';
 
 import { ProxyMessageStream, ExecutionController } from './core';
+import { METHODS } from './constants';
+
 import './App.css';
 
 function App() {
 
   const [proxyService, setProxyService] = useState();
-
-  // const sendDataToRN = useCallback(() => {
-  //   console.log('LOG: sendDataToRN executed');
-  //   proxyService && proxyService.write('hello');
-  // }, [proxyService]);
-
-  const fetchData = () => {
-    return fetch('https://registry.npmjs.org/@metamask/test-snap-bip44/-/test-snap-bip44-4.1.2.tgz')
-          .then((response) => response.blob())
-          .then((blob) => console.log(blob))
-          // .then((stream) => console.log(stream))
-  }
 
   useEffect(() => {
     const proxy = new ProxyMessageStream({
@@ -27,8 +17,6 @@ function App() {
       targetWindow: window.ReactNativeWebView,
     });
     setProxyService(proxy);
-
-    fetchData();
   }, []);
 
   useEffect(() => {
@@ -36,63 +24,53 @@ function App() {
       return;
     }
 
-    const startSnap = async (jobId) => {
-      await executionController.initJob(jobId);
-    }
-
     // Subscribe to events originated on the RN App
-    console.log('LOG: Subscribe to events originated on the RN App');
+    console.log('[WEB APP LOG] Subscribe to events originated on the RN App');
 
     const executionController = new ExecutionController({
       proxyService
     });
 
     proxyService.on('data', async (data) => {
-      console.log('LOG: Proxy receiving data - ', data);
-      const { data : { data: { method, args } }, jobId } = data;
+      console.log('[WEB APP LOG] Proxy receiving data - ', data);
+      const { data : { data: { method } }, jobId } = data;
 
-      console.log(jobId, method, args)
-
+      let job;
+    
       switch (method) {
-        case 'terminate':
-          console.log(executionController.jobs);
-          // sendDataToRN();
+        case METHODS.TERMINATE:
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
+          console.log('[WEB APP LOG] Terminate job', data.data, jobId);
+          // executionController.delete(jobId);
           return;
 
-        case 'ping':
+        case METHODS.PING:
           console.log(executionController.jobs);
-          await startSnap(jobId);
-          const job = executionController.findJob(jobId);
+          await executionController.init(jobId);
+          job = executionController.get(jobId);
           job.stream.write(data.data);
           // sendDataToRN();
           return;
-    
-        case 'hello':
-          console.log(executionController.jobs);
-          // sendDataToRN();
+
+        case METHODS.EXECUTE_SNAP:
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
           return;
 
-        case 'start-snap':
-          console.log('start-snap');
-          startSnap(jobId);
+        case METHODS.SNAP_RPC:
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
           return;
-
-        case 'stream-to-iframe':
-          console.log({ jobId, method, args })
-          // console.log({ jobs });
-          
-          console.log('job->', job, job.stream.write, proxyService);
-          job.stream.write('some message');
-          // if (job === undefined) {
-          //   console.log(`Job | Snap with ID ${snapId} not found`);
-          //   return;
-          // }
-          // console.log('DATA', { snapId, method, args, job }); 
+  
+        case METHODS.JSON_RPC:
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
           return;
 
         default:
-          const jobq = executionController.findJob(jobId);
-          jobq.stream.write(data.data);
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
           console.log('Default case');
       }
 

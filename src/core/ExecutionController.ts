@@ -16,12 +16,12 @@ interface IJob {
 
 class ExecutionController {
   
-  public jobs: IJob[] | [];
-  private proxyService: any;
+  public _jobs: Record<string, IJob>;
+  private _proxyService: any;
 
   constructor({ proxyService }: ExecutionControllerArgs) {
-    this.jobs = [];
-    this.proxyService = proxyService;
+    this._jobs = {};
+    this._proxyService = proxyService;
   }
 
   _createWindow = (jobId: string): Promise<WindowWorker> => {
@@ -51,6 +51,14 @@ class ExecutionController {
     })
   }
 
+  _deleteWindow = (jobId: string): void => {
+    const iframe = document.getElementById(jobId);
+    if (!iframe || !iframe.parentNode) {
+      throw new Error(`Window with the id ${jobId} was not found`)
+    }
+    iframe.parentNode.removeChild(iframe);
+  }
+
   _initJobStream = async (jobId: string): Promise<IJob> => {
     const window = await this._createWindow(jobId);
     console.log({ window });
@@ -64,31 +72,37 @@ class ExecutionController {
 
     stream.on('data', (data: any) => {
       console.log('[ExecutionController LOG] ProxyService sending message to iframe', data);
-      this.proxyService.write({ data, jobId });
+      this._proxyService.write({ data, jobId });
     })
 
     return { id: jobId, window, stream };
   }
 
+  _update = (newJob: IJob) => {    
+    this._jobs[newJob.id] = newJob;
+    console.log('[ExecutionController LOG] updateJobsState:', { newState: this._jobs, newElelment: newJob });
+  }
+
   // PUBLIC METHODS
 
-  initJob = async (jobId: string) => {
+  init = async (jobId: string): Promise<void> => {
     console.log('[ExecutionController LOG] initJob: Start new job');
     const job = await this._initJobStream(jobId);
-    this.updateJobsState(job);
+    this._update(job);
   };
 
-  getJob = (jobId: string) => {
-    const job = this.jobs.find((job: IJob) => job.id === jobId)
+  get = (jobId: string): IJob => {
+    const job = this._jobs[jobId];
     console.log('[ExecutionController LOG] getJob:', { jobId, job });
     return job;
   };
 
-  updateJobsState = (newJob: IJob) => {    
-    const newJobsState = [...this.jobs, newJob];
-    this.jobs = newJobsState;
-    console.log('[ExecutionController LOG] updateJobsState:', this.jobs, newJob);
+  delete = (jobId: string): void => {
+    this._jobs[jobId].stream._destroy();
+    this._deleteWindow(jobId);
+    delete this._jobs[jobId];
   }
+
 };
 
 export { ExecutionController };

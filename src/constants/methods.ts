@@ -3,4 +3,5 @@ export const METHODS = {
   EXECUTE_SNAP: 'executeSnap',
   SNAP_RPC: 'snapRpc',
   TERMINATE: 'terminate',
+  JSON_RPC: 'jsonRpc',
 }
