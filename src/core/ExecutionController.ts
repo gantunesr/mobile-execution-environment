@@ -71,7 +71,6 @@ class ExecutionController {
     console.log({ stream });
 
     stream.on('data', (data: any) => {
-      console.log('[ExecutionController LOG] ProxyService sending message to iframe', data);
       this._proxyService.write({ data, jobId });
     })
 

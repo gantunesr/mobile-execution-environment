@@ -64,6 +64,7 @@ class ProxyMessageStream extends BasePostMessageStream {
   }
 
   _postMessage(data: unknown): void {
+    console.log('[ProxyMessageStream LOG] ProxyService returning result to RN App', data);
     this._targetWindow.postMessage(
       JSON.stringify({
         target: this._target,
@@ -88,6 +89,7 @@ class ProxyMessageStream extends BasePostMessageStream {
         return;
       }*/
 
+    console.log('[ProxyMessageStream LOG] ProxyService sending message to iframe', message.data);
     this._onData(message.data);
   }
 
