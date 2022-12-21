@@ -12,6 +12,7 @@ interface IJob {
   id: string;
   window: WindowWorker;
   stream: WindowPostMessageStream;
+  terminateNext?: string;
 }
 
 class ExecutionController {
@@ -71,15 +72,25 @@ class ExecutionController {
     console.log({ stream });
 
     stream.on('data', (data: any) => {
+      console.log('ExecutionController ->', data)
       this._proxyService.write({ data, jobId });
+      this._handleJobDeletion({ data, jobId });
     })
 
     return { id: jobId, window, stream };
   }
 
-  _update = (newJob: IJob) => {    
+  _update = (newJob: IJob): void => {    
     this._jobs[newJob.id] = newJob;
     console.log('[ExecutionController LOG] updateJobsState:', { newState: this._jobs, newElelment: newJob });
+  }
+
+  _handleJobDeletion = ({ jobId, data }: { jobId: string, data: any }): void => {
+    const job = this.get(jobId);
+    console.log('ExecutionController ->', job?.terminateNext, data?.data?.id)
+      if (job?.terminateNext && job?.terminateNext === data?.data?.id) {
+        this.delete(jobId);
+      }
   }
 
   // PUBLIC METHODS
@@ -97,9 +108,13 @@ class ExecutionController {
   };
 
   delete = (jobId: string): void => {
+    console.log('[ExecutionController LOG] delete:', { jobId });
     this._jobs[jobId].stream._destroy();
+    console.log('[ExecutionController LOG] stream deleted:', { jobId });
     this._deleteWindow(jobId);
+    console.log('[ExecutionController LOG] iframe deleted:', { jobId });
     delete this._jobs[jobId];
+    console.log('[ExecutionController LOG] job deleted from state:', { jobId });
   }
 
 };
