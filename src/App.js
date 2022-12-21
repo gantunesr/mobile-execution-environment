@@ -33,7 +33,7 @@ function App() {
 
     proxyService.on('data', async (data) => {
       console.log('[WEB APP LOG] Proxy receiving data - ', data);
-      const { data : { data: { method } }, jobId } = data;
+      const { data : { data: { method, id } }, jobId } = data;
 
       let job;
     
@@ -41,7 +41,8 @@ function App() {
         case METHODS.TERMINATE:
           job = executionController.get(jobId);
           job.stream.write(data.data);
-          console.log('[WEB APP LOG] Terminate job', data.data, jobId);
+          console.log('[WEB APP LOG] Terminate job', data.data, jobId, id);
+          job.terminateNext = id;
           // executionController.delete(jobId);
           return;
 
