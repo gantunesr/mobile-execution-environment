@@ -1,7 +1,8 @@
 import {
   BasePostMessageStream,
   PostMessageEvent,
-} from "@metamask/post-message-stream";
+} from '@metamask/post-message-stream';
+import { PROXY_MSG_STREAM_ERROR } from '../constants';
 
 interface ProxyMessageStreamArgs {
   name: string;
@@ -44,12 +45,10 @@ class ProxyMessageStream extends BasePostMessageStream {
     super();
 
     if (
-      typeof window === "undefined" ||
-      typeof window.postMessage !== "function"
+      typeof window === 'undefined' ||
+      typeof window.postMessage !== 'function'
     ) {
-      throw new Error(
-        "window.postMessage is not a function. This class should only be instantiated in a Window."
-      );
+      throw new Error(PROXY_MSG_STREAM_ERROR.POST_MSG_NOT_FOUND);
     }
 
     this._name = name;
@@ -58,7 +57,7 @@ class ProxyMessageStream extends BasePostMessageStream {
     this._targetWindow = targetWindow;
     this._onMessage = this._onMessage.bind(this);
 
-    window.addEventListener("message", this._onMessage, false);
+    window.addEventListener('message', this._onMessage, false);
 
     this._handshake();
   }
