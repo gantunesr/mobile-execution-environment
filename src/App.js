@@ -38,20 +38,19 @@ function App() {
       let job;
     
       switch (method) {
-        case METHODS.TERMINATE:
-          job = executionController.get(jobId);
-          job.stream.write(data.data);
-          console.log('[WEB APP LOG] Terminate job', data.data, jobId, id);
-          job.terminateNext = id;
-          // executionController.delete(jobId);
-          return;
-
         case METHODS.PING:
           console.log(executionController.jobs);
           await executionController.init(jobId);
           job = executionController.get(jobId);
           job.stream.write(data.data);
           // sendDataToRN();
+          return;
+
+        case METHODS.TERMINATE:
+          console.log('[WEB APP LOG] Terminate job', data.data, jobId, id);
+          job = executionController.get(jobId);
+          job.stream.write(data.data);
+          job.terminateNext = id;
           return;
 
         case METHODS.EXECUTE_SNAP:
