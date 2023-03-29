@@ -78,9 +78,7 @@ function App() {
   }, [proxyService]);
 
   return (
-    <div className="App">
-      <p>deploy 1</p>
-    </div>
+    <div className="App" />
   );
 }
 
