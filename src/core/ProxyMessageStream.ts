@@ -59,6 +59,8 @@ class ProxyMessageStream extends BasePostMessageStream {
 
     window.addEventListener('message', this._onMessage, false);
 
+    console.log('[ProxyMessageStream LOG] Constructor called with args:', {name, target, targetOrigin, targetWindow});
+
     this._handshake();
   }
 
@@ -68,16 +70,17 @@ class ProxyMessageStream extends BasePostMessageStream {
       JSON.stringify({
         target: this._target,
         data,
-      }),
-      this._targetOrigin
+      })
     );
   }
 
   _onMessage(event: PostMessageEvent): void {
-    if (event.origin !== "") return;
+    // if (event.origin !== "") return;
+    console.log('[ProxyMessageStream LOG] _onMessage - event.data:', event.data);
     const message = JSON.parse(event.data as string);
 
-    if (message.target !== this._name) return;
+    // if (message.target !== this._name) return;
+    console.log('[ProxyMessageStream LOG] _onMessage - message.target:', message.target, 'this._name:', this._name);
 
     /*if (
         (this._targetOrigin !== '*' && event.origin !== this._targetOrigin) ||
@@ -87,6 +90,8 @@ class ProxyMessageStream extends BasePostMessageStream {
       ) {
         return;
       }*/
+
+    //const mockData = {data: {name: "command", data: {result: "OK", id: "wbYpw2UDHxQVxfI1c6gTC", jsonrpc: "2.0"}}, jobId: "bUNwloIpzm-ydsiwZX_EZ"}
 
     console.log('[ProxyMessageStream LOG] ProxyService sending message to iframe', message.data);
     this._onData(message.data);
