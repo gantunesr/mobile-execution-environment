@@ -5,12 +5,7 @@ import { METHODS } from './constants';
 
 import './App.css';
 
-window.onmessage = (event) => {
-  console.log('Snaps/ JSON RPC message received', event);
-};
-
 function App() {
-
 
   const [proxyService, setProxyService] = useState();
 
