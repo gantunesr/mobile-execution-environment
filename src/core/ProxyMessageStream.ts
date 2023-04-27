@@ -68,14 +68,13 @@ class ProxyMessageStream extends BasePostMessageStream {
       JSON.stringify({
         target: this._target,
         data,
-      }),
-      this._targetOrigin
+      })
     );
   }
 
   _onMessage(event: PostMessageEvent): void {
-    if (event.origin !== "") return;
-    const message = JSON.parse(event.data as string);
+    const message = event.data;
+    if (typeof message !== 'object' || message === null) return;
 
     if (message.target !== this._name) return;
 
@@ -87,7 +86,6 @@ class ProxyMessageStream extends BasePostMessageStream {
       ) {
         return;
       }*/
-
     console.log('[ProxyMessageStream LOG] ProxyService sending message to iframe', message.data);
     this._onData(message.data);
   }

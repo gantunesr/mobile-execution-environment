@@ -33,6 +33,7 @@ function App() {
 
     proxyService.on('data', async (data) => {
       console.log('[WEB APP LOG] Proxy receiving data - ', data);
+      if (typeof data !== 'object' || data === null) return;
       const { data : { data: { method, id } }, jobId } = data;
 
       let job;
