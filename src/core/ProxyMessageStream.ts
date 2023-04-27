@@ -75,26 +75,27 @@ class ProxyMessageStream extends BasePostMessageStream {
   }
 
   _onMessage(event: PostMessageEvent): void {
-    // if (event.origin !== "") return;
-    console.log('[ProxyMessageStream LOG] _onMessage - event.data:', event.data);
-    const message = JSON.parse(event.data as string);
-
-    // if (message.target !== this._name) return;
-    console.log('[ProxyMessageStream LOG] _onMessage - message.target:', message.target, 'this._name:', this._name);
-
-    /*if (
-        (this._targetOrigin !== '*' && event.origin !== this._targetOrigin) ||
-        event.source !== this._targetWindow ||
-        !isValidStreamMessage(message) ||
-        message.target !== this._name
-      ) {
-        return;
-      }*/
-
-    //const mockData = {data: {name: "command", data: {result: "OK", id: "wbYpw2UDHxQVxfI1c6gTC", jsonrpc: "2.0"}}, jobId: "bUNwloIpzm-ydsiwZX_EZ"}
-
-    console.log('[ProxyMessageStream LOG] ProxyService sending message to iframe', message.data);
-    this._onData(message.data);
+    // if (event.origin !== "http://localhost:3001") return;
+      console.log('[ProxyMessageStream LOG] _onMessage - event.data:', event.data);
+      const message = event.data;
+      if (typeof message !== 'object' || message === null) return;
+  
+      if (message.target !== this._name) return;
+      console.log('[ProxyMessageStream LOG] _onMessage - message.target:', message.target, 'this._name:', this._name);
+  
+      /*if (
+          (this._targetOrigin !== '*' && event.origin !== this._targetOrigin) ||
+          event.source !== this._targetWindow ||
+          !isValidStreamMessage(message) ||
+          message.target !== this._name
+        ) {
+          return;
+        }*/
+  
+      //const mockData = {data: {name: "command", data: {result: "OK", id: "wbYpw2UDHxQVxfI1c6gTC", jsonrpc: "2.0"}}, jobId: "bUNwloIpzm-ydsiwZX_EZ"}
+  
+      console.log('[ProxyMessageStream LOG] ProxyService sending message to iframe', message.data);
+      this._onData(message.data);
   }
 
   _destroy() {

@@ -5,7 +5,12 @@ import { METHODS } from './constants';
 
 import './App.css';
 
+window.onmessage = (event) => {
+  console.log('Snaps/ JSON RPC message received', event);
+};
+
 function App() {
+
 
   const [proxyService, setProxyService] = useState();
 
@@ -33,6 +38,7 @@ function App() {
 
     proxyService.on('data', async (data) => {
       console.log('[WEB APP LOG] Proxy receiving data - ', data);
+      if (typeof data !== 'object' || data === null) return;
       const { data : { data: { method, id } }, jobId } = data;
 
       let job;
